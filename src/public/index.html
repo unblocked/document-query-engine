@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Document Query Engine</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Document Query Engine</h1>
+      <div id="stats" class="stats"></div>
+      <nav id="tabs">
+        <button data-tab="query" class="active">Query</button>
+        <button data-tab="chat">Chat</button>
+      </nav>
+    </header>
+
+    <main>
+      <!-- QUERY: natural language -> pipeline + raw results -->
+      <section id="query" class="panel active">
+        <form id="query-form" class="row">
+          <input id="query-input" type="text" placeholder='e.g. "open PRs with no reviews" or "count PRs by author"' autocomplete="off" />
+          <button type="submit">Run</button>
+        </form>
+        <div class="query-result">
+          <div>
+            <h3>Generated pipeline</h3>
+            <pre id="query-plan" class="output code"></pre>
+          </div>
+          <div>
+            <h3>Result <span id="query-meta"></span></h3>
+            <pre id="query-rows" class="output"></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHAT: full agent loop with a query tool -->
+      <section id="chat" class="panel">
+        <div class="chat-bar">
+          <button id="chat-clear" type="button">New chat</button>
+        </div>
+        <div id="chat-log" class="chat-log"></div>
+        <form id="chat-form" class="row">
+          <input id="chat-input" type="text" placeholder="Ask anything about the PRs and issues…" autocomplete="off" />
+          <button type="submit">Send</button>
+        </form>
+      </section>
+    </main>
+
+    <script src="/vendor/marked.min.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>
