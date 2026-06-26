@@ -98,6 +98,22 @@ label { color: var(--muted); font-size: 13px; display: flex; gap: 8px; align-ite
 .schema[open] summary { color: var(--accent); }
 .schema .output { margin-top: 8px; }
 
+.trace { margin-bottom: 16px; }
+.trace h3 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 8px; }
+.attempt {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: var(--panel);
+}
+.attempt.rejected { border-left-color: #f85149; }
+.attempt.accepted { border-left-color: var(--green); }
+.attempt-head { font-size: 13px; color: var(--fg); margin-bottom: 6px; }
+.attempt .output { margin: 0; max-height: 120px; padding: 8px 10px; }
+.attempt-err { color: #f85149; font-size: 12.5px; font-family: "SF Mono", ui-monospace, monospace; margin-top: 6px; }
+
 .query-result { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .query-result h3 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 #query-meta { color: var(--green); text-transform: none; letter-spacing: 0; }
