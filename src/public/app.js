@@ -48,6 +48,21 @@ queryForm.addEventListener("submit", async (e) => {
   else queryRows.textContent = outcome.reason ?? "";
 });
 
+// --- QUERY tab: discovered schema disclosure (lazy-loaded on first open) ---
+const schemaDisclosure = document.getElementById("schema-disclosure");
+const schemaBody = document.getElementById("schema-body");
+let schemaLoaded = false;
+schemaDisclosure?.addEventListener("toggle", async () => {
+  if (!schemaDisclosure.open || schemaLoaded) return;
+  schemaLoaded = true;
+  try {
+    schemaBody.textContent = await (await fetch("/api/schema")).text();
+  } catch {
+    schemaLoaded = false; // allow a retry on next open
+    schemaBody.textContent = "Failed to load schema.";
+  }
+});
+
 // --- CHAT tab: streamed agent loop ---
 const chatForm = document.getElementById("chat-form");
 const chatInput = document.getElementById("chat-input");
