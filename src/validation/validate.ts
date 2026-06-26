@@ -16,6 +16,8 @@ const ALLOWED_OPERATORS = new Set([
   // query operators
   "$eq", "$ne", "$gt", "$gte", "$lt", "$lte", "$in", "$nin",
   "$and", "$or", "$not", "$nor", "$exists", "$size", "$elemMatch",
+  // full-text search (backed by the title/body text index)
+  "$text", "$search", "$language", "$caseSensitive", "$diacriticSensitive",
   // accumulators / group expressions
   "$sum", "$avg", "$min", "$max", "$first", "$last", "$push", "$addToSet",
 ]);
