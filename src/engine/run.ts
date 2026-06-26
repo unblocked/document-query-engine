@@ -4,6 +4,7 @@
 import { synthesize } from "../synthesis/synthesize.js";
 import { validatePlan } from "../validation/validate.js";
 import { executePlan } from "./execute.js";
+import { toolResultMessage, type LlmMessage } from "../llm/provider.js";
 
 /** A synthesized query plan: which collection to run against, and the aggregation pipeline. */
 export interface QueryPlan {
@@ -36,30 +37,59 @@ export interface RunOptions {
 
 /**
  * Turn a natural-language question into a MongoDB query, run it, return the outcome.
- * Step 4: synthesize -> validate -> execute. (The retry loop comes in step 5.)
+ * Step 5: synthesize -> validate -> execute, feeding validation/runtime errors back
+ * to the model so it self-corrects, up to maxAttempts. The trace records every
+ * attempt (plan + why it was rejected) so the UI can show the self-correction.
  */
 export async function runQuery(query: string, opts: RunOptions = {}): Promise<Outcome> {
+  const maxAttempts = opts.maxAttempts ?? 3;
+  const trace: Attempt[] = [];
+
   let plan: QueryPlan;
+  let toolUseId: string;
+  let messages: LlmMessage[];
   try {
-    ({ plan } = await synthesize(query, { names: opts.names }));
+    ({ plan, toolUseId, messages } = await synthesize(query, { names: opts.names }));
   } catch (err) {
     return { type: "ResolutionFailed", reason: errorText(err), attempts: 1 };
   }
 
-  opts.onPlan?.(plan, 1);
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    opts.onPlan?.(plan, attempt);
 
-  // The trace records each attempt (plan + why it was rejected) so the UI can show
-  // the validation outcome. Step 4 has a single attempt; step 5 appends per retry.
-  const validation = await validatePlan(plan);
-  const trace: Attempt[] = [{ plan, errors: validation.ok ? [] : validation.errors }];
-  if (!validation.ok) {
-    return { type: "MaxAttemptsExceeded", errors: validation.errors, plan, attempts: 1, trace };
+    let errors: string[] | null = null;
+    const validation = await validatePlan(plan);
+    if (!validation.ok) {
+      errors = validation.errors;
+    } else {
+      try {
+        const rows = await executePlan(plan);
+        trace.push({ plan, errors: [] });
+        return rows.length
+          ? { type: "Success", rows, plan, attempts: attempt, trace }
+          : { type: "NoResults", plan, attempts: attempt, trace };
+      } catch (err) {
+        errors = [errorText(err)];
+      }
+    }
+
+    trace.push({ plan, errors });
+
+    if (attempt === maxAttempts) {
+      return { type: "MaxAttemptsExceeded", errors, plan, attempts: attempt, trace };
+    }
+
+    // Feed the error back as a tool result and let the model correct itself.
+    const feedback = `Query rejected:\n- ${errors.join("\n- ")}\nFix the pipeline and call the tool again.`;
+    messages = [...messages, toolResultMessage(toolUseId, feedback, true)];
+    try {
+      ({ plan, toolUseId, messages } = await synthesize(query, { history: messages }));
+    } catch (err) {
+      return { type: "ResolutionFailed", reason: errorText(err), attempts: attempt + 1 };
+    }
   }
 
-  const rows = await executePlan(plan);
-  return rows.length
-    ? { type: "Success", rows, plan, attempts: 1, trace }
-    : { type: "NoResults", plan, attempts: 1, trace };
+  return { type: "ResolutionFailed", reason: "exhausted attempts", attempts: maxAttempts };
 }
 
 function errorText(err: unknown): string {
