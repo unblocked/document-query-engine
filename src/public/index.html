@@ -23,6 +23,10 @@
           <input id="query-input" type="text" placeholder='e.g. "open PRs with no reviews" or "count PRs by author"' autocomplete="off" />
           <button type="submit">Run</button>
         </form>
+        <details id="schema-disclosure" class="schema">
+          <summary>Discovered document schema — what the synthesizer is told</summary>
+          <pre id="schema-body" class="output code">Loading…</pre>
+        </details>
         <div class="query-result">
           <div>
             <h3>Generated pipeline</h3>
