@@ -22,6 +22,36 @@ const queryForm = document.getElementById("query-form");
 const queryPlan = document.getElementById("query-plan");
 const queryRows = document.getElementById("query-rows");
 const queryMeta = document.getElementById("query-meta");
+const queryTrace = document.getElementById("query-trace");
+
+// Show the validate → reject → retry timeline. Skipped when a single attempt
+// passed straight away (nothing interesting to show).
+function renderTrace(trace) {
+  queryTrace.innerHTML = "";
+  if (!trace || trace.length === 0) return;
+  if (trace.length === 1 && trace[0].errors.length === 0) return;
+  const h = document.createElement("h3");
+  h.textContent = "Attempts";
+  queryTrace.appendChild(h);
+  trace.forEach((a, i) => {
+    const card = document.createElement("div");
+    card.className = `attempt ${a.errors.length ? "rejected" : "accepted"}`;
+    const head = document.createElement("div");
+    head.className = "attempt-head";
+    head.textContent = `Attempt ${i + 1} — ${a.errors.length ? "✗ rejected by validation" : "✓ valid"}`;
+    const pre = document.createElement("pre");
+    pre.className = "output code";
+    pre.textContent = JSON.stringify(a.plan.pipeline);
+    card.append(head, pre);
+    if (a.errors.length) {
+      const err = document.createElement("div");
+      err.className = "attempt-err";
+      err.textContent = a.errors.join("  ·  ");
+      card.appendChild(err);
+    }
+    queryTrace.appendChild(card);
+  });
+}
 
 queryForm.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -30,12 +60,14 @@ queryForm.addEventListener("submit", async (e) => {
   queryPlan.textContent = "…";
   queryRows.textContent = "";
   queryMeta.textContent = "";
+  queryTrace.innerHTML = "";
   const outcome = await (await fetch("/api/query", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ question }),
   })).json();
 
+  renderTrace(outcome.trace);
   queryPlan.textContent = outcome.plan
     ? `${outcome.plan.collection}\n${JSON.stringify(outcome.plan.pipeline, null, 2)}`
     : "(no plan)";
