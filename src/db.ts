@@ -45,12 +45,15 @@ export async function ensureIndexes(): Promise<void> {
   await prs.createIndex({ state: 1 });
   await prs.createIndex({ merged_at: -1 });
   await prs.createIndex({ created_at: -1 });
+  // Full-text index over content, enabling {$text: {$search: ...}} topic queries.
+  await prs.createIndex({ title: "text", body: "text" });
 
   const issues = await getCollection("issues");
   await issues.createIndex({ repo: 1, number: 1 }, { unique: true });
   await issues.createIndex({ "user.login": 1 });
   await issues.createIndex({ state: 1 });
   await issues.createIndex({ created_at: -1 });
+  await issues.createIndex({ title: "text", body: "text" });
 
   const users = await getUsersCollection();
   await users.createIndex({ login: 1 }, { unique: true });

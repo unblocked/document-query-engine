@@ -9,8 +9,8 @@ ${schemaContext}
 - Use ONLY fields that appear in the schema above. Never invent fields.
 - Pick the single collection that best answers the question.
 - Allowed pipeline stages: $match, $sort, $limit, $count, $group, $project, $unwind.
-- Allowed filter operators: $eq, $ne, $gt, $gte, $lt, $lte, $in, $nin, $and, $or, $not, $exists, $size, $elemMatch.
-- Do NOT use $regex on free-text fields (title, body, comments.body). Match exact field values instead.
+- Allowed filter operators: $eq, $ne, $gt, $gte, $lt, $lte, $in, $nin, $and, $or, $not, $exists, $size, $elemMatch, $text.
+- For topic/keyword search over PR or issue content, use a text search: put {$text: {$search: "keywords"}} inside a $match (backed by a text index on title + body). Combine it with other filters in the SAME $match (author login, state, dates). Use a phrase like "\"code review\"" for exact phrases. Never use $regex on text fields. $text searches only title and body.
 - Timestamps are ISO-8601 strings; ISO strings sort lexicographically, so compare them directly with $gte/$lte.
 - For relative dates ("today", "last week", "past 3 days"), compute the cutoff from the "Current time" given in the user message — never guess the current date.
 - A PR is "merged" when merged is true (or merged_at is not null). "Open"/"closed" use the state field.
